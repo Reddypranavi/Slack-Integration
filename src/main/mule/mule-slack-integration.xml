@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:slack="http://www.mulesoft.org/schema/mule/slack"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/slack http://www.mulesoft.org/schema/mule/slack/current/mule-slack.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:listener-config name="Slack_Configg" doc:name="HTTP Listener config" doc:id="1f92dd41-7ecb-4f67-9374-c7c74bd67913" >
+		<http:listener-connection host="0.0.0.0" port="8082" protocol="HTTPS">
+			<tls:context >
+				<tls:key-store type="jks" path="keystore.jks" alias="mulehttpskey" keyPassword="mule123" password="mule123" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<slack:config name="Slack_Connector_Configg" doc:name="Slack Connector Config" doc:id="5b29257d-5a1b-4a69-921b-aeef89ea4f74" >
+		<slack:slack-auth-connection >
+			<slack:oauth-authorization-code consumerKey="9852596489526.9869897280196" consumerSecret="5a8cf21bb9fab099e1dfd0edae6b7691" scopes="chat:write channels:read channels:join users:read" authorizationUrl="https://slack.com/oauth/v2/authorize" accessTokenUrl="https://slack.com/api/oauth.v2.access"/>
+			<slack:oauth-callback-config listenerConfig="HTTP_Listener_config" callbackPath="/callback" authorizePath="/authorize" externalCallbackUrl="https://slack-o6af04.5sc6y6-4.usa-e2.cloudhub.io/callback"/>
+		</slack:slack-auth-connection>
+	</slack:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="09914b8d-1047-4043-b44c-40db7f7662ef" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="mule-slack-integrationFloww" doc:id="5d2574a7-2363-4763-89d0-338621609e0e" >
+		<http:listener doc:name="Listener" doc:id="0fe24ed8-1940-416c-a4a7-96ddd556d2b8" config-ref="HTTP_Listener_config" path="/send"/>
+		<logger level="INFO" doc:name="Logger" doc:id="78d9d97c-556d-41eb-aa62-61ef54c13096" message="***FLOW INITIATED***"/>
+		<ee:transform doc:name="Transform Message" doc:id="1b660807-397a-4768-a382-f89344c9d2f4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	channel:"C09QY722KNF",
+	text:"Hello"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<!-- [STUDIO:"Create Channel"]<slack:create-conversationscreate doc:name="Create Channel" doc:id="b4f9bc18-3528-4c4e-9b59-6d83dca6d81b" config-ref="Slack_Connector_Config"/> [STUDIO] -->
+		<slack:create-chatpost-message doc:name="Send Message" doc:id="a713b8ce-5fbb-408b-bf41-b546efac8ccd" config-ref="Slack_Connector_Configg"/>
+	</flow>
+	<flow name="mule-slack-integrationFlow1" doc:id="84d6659f-3c1a-410a-98ab-d844df19f565" >
+		<http:listener doc:name="Listener" doc:id="de57e1ea-facf-42d8-836c-a8d249f283e6" config-ref="HTTP_Listener_config" path="/callback"/>
+		<logger level="INFO" doc:name="Logger" doc:id="3c592859-40bf-49b7-944f-be98e1d245cc" message="✅ OAuth callback received. Slack token generated successfully."/>
+	</flow>
+</mule>
